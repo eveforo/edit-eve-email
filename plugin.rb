@@ -30,15 +30,10 @@ module EditEveEmailChangeToExtension
           new_email: email,
       }
 
-      if authorize_both?
-        args[:change_state] = EmailChangeRequest.states[:authorizing_old]
-        email_token = @user.email_tokens.create!(email: args[:old_email])
-        args[:old_email_token] = email_token
-      else
-        args[:change_state] = EmailChangeRequest.states[:authorizing_new]
-        email_token = @user.email_tokens.create!(email: args[:new_email])
-        args[:new_email_token] = email_token
-      end
+	  args[:change_state] = EmailChangeRequest.states[:authorizing_new]
+	  email_token = @user.email_tokens.create!(email: args[:new_email])
+	  args[:new_email_token] = email_token
+	  
       @user.email_change_requests.create!(args)
 
       Rails.logger.warn("EditEveEmailChangeToExtension token: #{email_token.token}")
@@ -46,7 +41,7 @@ module EditEveEmailChangeToExtension
       confirm(email_token.token)
     end
 
-      #super(email_input)
+    #super(email_input)
   end
 end
 
