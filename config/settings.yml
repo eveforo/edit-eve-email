@@ -1,0 +1,5 @@
+# edit-eve-email
+plugins:
+  edit_eve_email_active:
+    default: false
+    client: true
