@@ -73,7 +73,7 @@ class ::EmailUpdater
   prepend EditEveEmailChangeToExtension
 end
 
-require_dependency 'users_email_controller'
+require_dependency 'app/controllers/users_email_controller'
 class ::UsersEmailController
   prepend UsersEmailControllerToExtension
 end
