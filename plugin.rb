@@ -2,7 +2,7 @@
 
 # name: edit-eve-email
 # about: Doesnt send confirmation email.
-# version: 0.0.1
+# version: 0.0.2
 # authors: Hikryon - Iván Viguera.
 
 register_asset "javascripts/discourse/templates/connectors/edit-eve-email-links/edit-eve-email-links.hbs"
@@ -30,22 +30,50 @@ module EditEveEmailChangeToExtension
           new_email: email,
       }
 
-	  args[:change_state] = EmailChangeRequest.states[:authorizing_new]
-	  email_token = @user.email_tokens.create!(email: args[:new_email])
-	  args[:new_email_token] = email_token
-	  
+      args[:change_state] = EmailChangeRequest.states[:authorizing_new]
+      email_token = @user.email_tokens.create!(email: args[:new_email])
+      args[:new_email_token] = email_token
+
       @user.email_change_requests.create!(args)
 
       Rails.logger.warn("EditEveEmailChangeToExtension token: #{email_token.token}")
 
       confirm(email_token.token)
     end
-
     #super(email_input)
+  end
+end
+
+module UsersEmailControllerToExtension
+  def update
+    params.require(:email)
+    user = fetch_user_from_params
+
+    RateLimiter.new(user, "change-email-hr-#{request.remote_ip}", 6, 1.hour).performed!
+    RateLimiter.new(user, "change-email-min-#{request.remote_ip}", 3, 1.minute).performed!
+
+    updater = EmailUpdater.new(guardian, user)
+
+    if updater.change_to(params[:email]) == :complete
+      updater.user.user_stat.reset_bounce_score!
+    else
+      return render_json_error(updater.errors.full_messages)
+    end
+
+    redirect_url = path("/u/confirm-new-email")
+    redirect_to "#{redirect_url}?done=true"
+
+  rescue RateLimiter::LimitExceeded
+    render_json_error(I18n.t("rate_limiter.slow_down"))
   end
 end
 
 require_dependency 'email_updater'
 class ::EmailUpdater
   prepend EditEveEmailChangeToExtension
+end
+
+require_dependency 'users_email_controller'
+class ::UsersEmailController
+  prepend UsersEmailControllerToExtension
 end
