@@ -43,7 +43,7 @@ module EditEveEmailChangeToExtension
     #super(email_input)
   end
 end
-
+=begin
 module UsersEmailControllerToExtension
   def update
     params.require(:email)
@@ -67,7 +67,7 @@ module UsersEmailControllerToExtension
     render_json_error(I18n.t("rate_limiter.slow_down"))
   end
 end
-
+=end
 require_dependency 'email_updater'
 class ::EmailUpdater
   prepend EditEveEmailChangeToExtension
